@@ -1,0 +1,12 @@
+secrets
+csv_files/*
+!csv_files/.gitkeep
+link_files/*
+!link_files/.gitkeep
+pickle_files/*
+!pickle_files/.gitkeep
+pages/*
+!pages/.gitkeep
+__pycache__
+*.pyc
+.DS_Store
