@@ -10,8 +10,8 @@ def parse_page(index, county):
     # create the dict that data will be stuffed into
     company_dict = {}
     root_dir = os.getcwd()
-    filename = county + '_' + str(index)
-    file_path = os.path.join('pages', county, filename)
+    filename = county.lower() + '_' + str(index)
+    file_path = os.path.join('pages', county.lower(), filename)
     company_dict['Filename'] = filename
 
     pickle_file = open(file_path, 'rb')
@@ -97,7 +97,7 @@ def create_csv(county):
 
 
 if __name__ == '__main__':
-    county = input('Input county (i.e. Delaware) ==> ').lower()
+    county = input('Input county (i.e. Delaware) ==> ')
     create_csv(county)
     
 

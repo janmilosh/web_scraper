@@ -34,7 +34,7 @@ def get_links(county):
 
     #input the new county to search
     elem = driver.find_element_by_id('countysearch')
-    elem.send_keys(county)
+    elem.send_keys(county.title())
     elem = driver.find_element_by_link_text(full_county)
     elem.click()
 
@@ -83,8 +83,8 @@ def get_links(county):
     pickle.dump(company_links, pickle_file)
     pickle_file.close()
 
-    print('There are {0} companies in {1} county.'.format(len(company_links), county))
+    print('There are {0} companies in {1} county.'.format(len(company_links), county.title()))
 
 if __name__ == '__main__':
-    county = input('Input county (i.e. Delaware) ==> ').lower()
+    county = input('Input county (i.e. Delaware) ==> ')
     get_links(county)

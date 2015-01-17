@@ -29,5 +29,5 @@ To run the whole thing in one shot (for a list of Ohio counties):
 Put your counties of interest in the list, ```counties```, in ```application.py```, then run all of the scripts for the list:
 
 ```
-python -m application
+python application.py
 ```

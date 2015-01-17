@@ -30,5 +30,5 @@ def get_pages(county):
             print('Saved file: ', company_page_file)
 
 if __name__ == '__main__':
-    county = input('Input county (i.e. Delaware) ==> ').lower()
+    county = input('Input county (i.e. Delaware) ==> ')
     get_pages(county)
