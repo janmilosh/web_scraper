@@ -1,24 +1,28 @@
-# Web Scraping and parsing scripts
+# Web Scraping and Parsing Scripts
 
-## This set of three modules for scraping some data and parsing into csv files
+## This is a set of three modules for scraping data from a website and parsing into csv files
 
 ### Running the modules separately:
 
-Note: Please run from a virtual environment installed dependencies listed in ```requirements.txt```.
+Note: Please run from a virtual environment with installed dependencies listed in ```requirements.txt```.
 
-To get the links for the companies in a given county (written into the ```link_files``` directory):
+To get the links for the companies in a given county (written to the ```link_files``` directory):
 
 ```
 python -m scrape.get_company_links
 ```
 
-To process links into a web page for each link (corresponding to a company and written into the ```pages``` directory):
+To process links into a web page for each link (corresponding to a company and written to the ```pages``` directory):
 
 ```
 python -m scrape.get_company_pages
 ```
 
-To parse the web pages for a given county into a csv file containing the scraped data (written into the ```csv_files``` directory):
+To parse the web pages for a given county into a csv file containing the scraped data (written to the ```csv_files``` directory):
+
+```
+python -m scrape.parse_pages
+```
 
 To run the whole thing in one shot (for a list of Ohio counties):
 

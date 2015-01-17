@@ -7,7 +7,7 @@ import pickle
 import secrets.secrets as secrets
 
 def get_links(county):
-    full_county = '{0} County, OH'.format(county)
+    full_county = '{0} County, OH'.format(county.title())
     company_links = []
 
     driver = webdriver.Firefox()
