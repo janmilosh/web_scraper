@@ -4,7 +4,7 @@
 
 ### Running the modules separately:
 
-Note: Please run from a virtual environment with installed dependencies listed in ```requirements.txt```.
+Note: Run from a virtual environment with installed dependencies listed in ```requirements.txt```. Also, there is a secrets module not included here as these scripts can only be run by authorized users of the site that's being scraped.
 
 To get the links for the companies in a given county (written to the ```link_files``` directory):
 
