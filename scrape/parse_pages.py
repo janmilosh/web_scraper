@@ -20,6 +20,7 @@ def parse_page(index, county):
 
     # make the soup
     soup = BeautifulSoup(page.text)
+    print(soup.prettify())
 
     # get rid of spacers, images, and scripts, and break tags in the html
     spacers = soup.select('.producttabletd2') \
