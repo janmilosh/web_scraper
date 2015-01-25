@@ -8,9 +8,11 @@ import secrets.secrets as secrets
 class CompanyLinks:
     def __init__(self, county):
         self.county = county.title()        
-        self.driver = webdriver.Firefox() 
+        self.driver = webdriver.Firefox()
+        self.company_links = []
+        self.root_dir = os.getcwd()
 
-    def configure(self):
+    def _configure(self):
         width = 1280
         height = 800
         time_in_seconds = 10
@@ -18,83 +20,81 @@ class CompanyLinks:
         self.driver.implicitly_wait(time_in_seconds)
     
     def get_links(self):
-        self.configure()       
+        self._configure()
+        self._login_to_website()
+        self._input_county_to_search_on_list_page()
+        self._navigate_to_list_of_companies_page()
+        self._scrape_links_from_paginated_list_of_companies()
+        self.driver.close()
 
-        full_county = '{0} County, OH'.format(self.county)
-        company_links = []
+        self._write_links_to_human_readable_file()
+        self._write_links_to_pickle_file()
+        print('There are {0} companies in {1} county.'.format(len(self.company_links), self.county))
 
-        
-
-        #log in to the website
+    def _login_to_website(self):
         self.driver.get(secrets.SITE_URL + '/login/')
+        username = self.driver.find_element_by_name("Username")
+        username.send_keys(secrets.USERNAME)
+        password = self.driver.find_element_by_name("Password")
+        password.send_keys(secrets.PASSWORD)
+        login = self.driver.find_element_by_name("Login")
+        login.click()
 
-        elem = self.driver.find_element_by_name("Username")
-        elem.send_keys(secrets.USERNAME)
-        elem = self.driver.find_element_by_name("Password")
-        elem.send_keys(secrets.PASSWORD)
-        elem = self.driver.find_element_by_name("Login")
-        elem.click()
-
-        #on dashboard page now, input the county to search
+    def _input_county_to_search_on_list_page(self):    
         self.driver.get(secrets.SITE_URL + '/list/')
 
-        #clear out any old selections
-        elems = self.driver.find_elements_by_class_name('listed')
-        for elem in elems:
-            elem.click()
+        previous_counties_to_remove = self.driver.find_elements_by_class_name('listed')
+        for county in previous_counties_to_remove:
+            county.click()
 
-        #input the new county to search
-        elem = self.driver.find_element_by_id('countysearch')
-        elem.send_keys(self.county)
-        elem = self.driver.find_element_by_link_text(full_county)
-        elem.click()
+        county_input_field = self.driver.find_element_by_id('countysearch')
+        county_input_field.send_keys(self.county)
+        county_and_state = self.county + ' County, OH'
+        county_to_search = self.driver.find_element_by_link_text(county_and_state)
+        county_to_search.click()
 
-        #navigate to the list of companies
-        elem = self.driver.find_element_by_id('listcounttab')
-        elem.click()
+    def _navigate_to_list_of_companies_page(self):
+        list_of_companies_count_button = self.driver.find_element_by_id('listcounttab')
+        list_of_companies_count_button.click()
 
-        def go_to_company_detail_pages():
-            elems = self.driver.find_elements_by_class_name('listresultstabletdcompany')
-            last_index = len(elems)
-            for i in range(1, last_index):
-                link = elems[i].find_element_by_tag_name('a')
-                raw_href = link.get_attribute('href')
-                left_stripped_href = raw_href.lstrip("javascript:EZOpen('")
-                clean_href = left_stripped_href.rstrip("');")
-                company_links.append(clean_href)
-
-        #Do this for the initial list of companies
-        go_to_company_detail_pages()
-
-        # If there is pagination, loop through the rest of the pages
+    def _scrape_links_from_paginated_list_of_companies(self):
+        self._scrape_links_from_single_page()
         try:
-            elem = self.driver.find_element_by_class_name('pagination')
-            spans = elem.find_elements_by_tag_name('span')
+            pagination = self.driver.find_element_by_class_name('pagination')
+            spans = pagination.find_elements_by_tag_name('span')
             last_index = len(spans)-2
             for i in range(2, last_index):
-                elem = self.driver.find_element_by_class_name('pagination')
-                spans = elem.find_elements_by_tag_name('span')
+                pagination = self.driver.find_element_by_class_name('pagination')
+                spans = pagination.find_elements_by_tag_name('span')
                 spans[i].click()
                 time.sleep(2)
-                go_to_company_detail_pages()
+                self._scrape_links_from_single_page()
         except:
             pass
 
-        self.driver.close()
+    def _scrape_links_from_single_page(self):
+        companies = self.driver.find_elements_by_class_name('listresultstabletdcompany')
+        
+        for i in range(1, len(companies)):
+            link = companies[i].find_element_by_tag_name('a')
+            raw_href = link.get_attribute('href')
+            left_stripped_href = raw_href.lstrip("javascript:EZOpen('")
+            clean_href = left_stripped_href.rstrip("');")
+            self.company_links.append(clean_href)
 
-        root_dir = os.getcwd()
-        links_file_path = os.path.join(root_dir, 'link_files', (self.county.lower() + '.txt'))
+    def _write_links_to_human_readable_file(self):    
+        links_file_path = os.path.join(self.root_dir, 'link_files', (self.county.lower() + '.txt'))
         links_file = open(links_file_path, 'w')
-        for link in company_links:
+        for link in self.company_links:
             links_file.write("%s\n" % link)
         links_file.close()
 
-        pickle_file_path = os.path.join(root_dir, 'pickle_files', (self.county.lower()))
+    def _write_links_to_pickle_file(self):    
+        pickle_file_path = os.path.join(self.root_dir, 'pickle_files', (self.county.lower()))
         pickle_file = open(pickle_file_path, 'wb')
-        pickle.dump(company_links, pickle_file)
+        pickle.dump(self.company_links, pickle_file)
         pickle_file.close()
 
-        print('There are {0} companies in {1} county.'.format(len(company_links), self.county))
 
 if __name__ == '__main__':
     county = input('Input county (i.e. Delaware) ==> ')
