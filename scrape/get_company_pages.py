@@ -16,7 +16,7 @@ class CompanyPages:
 
     def get_pages(self):
         """The main method that calls the other methods and loops through the list
-        of companies with the result of company detail pages being written to files"""
+        of companies with the result of company detail pages being written to files."""
         self.company_links = self._read_list_of_pickled_company_links_from_file()   
 
         with requests.Session() as session:
@@ -35,7 +35,7 @@ class CompanyPages:
         return links
 
     def _login_to_site(self, session):
-        """Uses the requests session to log in to the site."""
+        """Uses the requests session to login to the site."""
         url = secrets.SITE_URL + '/login/'
         session.get(url)
         login_data = dict(Username=secrets.USERNAME, Password=secrets.PASSWORD, urlforward='/main', Login='Login')
