@@ -6,9 +6,9 @@ import secrets.secrets as secrets
 
     
 class CompanyLinks:
-    """Goes to a website and finds a list of manufacturing company links
-    for a specified county in Ohio and writes them to to a human readable file
-    and a pickle file."""
+    """Using selenium webdriver, goes to a website and finds a list of
+    manufacturing company links for a specified county in Ohio
+    and writes them to to a human readable file and a pickle file."""
     def __init__(self, county):
         self.county = county.title()        
         self.driver = webdriver.Firefox()

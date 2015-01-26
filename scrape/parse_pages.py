@@ -1,10 +1,7 @@
+import csv, glob, os, pickle, re, pprint
+
 from bs4 import BeautifulSoup
-import csv
-import glob
-import os
-import pickle
-import re
-import pprint
+
 
 def parse_page(index, county):
     # create the dict that data will be stuffed into
