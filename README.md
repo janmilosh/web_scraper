@@ -21,7 +21,7 @@ python -m scrape.get_company_pages
 To parse the web pages for a given county into a csv file containing the scraped data (written to the ```csv_files``` directory):
 
 ```
-python -m scrape.parse_pages
+python -m scrape.parse_pages_to_csv
 ```
 
 To run the whole thing in one shot (for a list of Ohio counties):
