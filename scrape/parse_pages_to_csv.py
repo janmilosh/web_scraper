@@ -39,16 +39,15 @@ class CompanyCSV:
         print(soup.prettify())
 
         # get rid of spacers, images, and scripts, and break tags in the html
-        spacers = soup.select('.producttabletd2') \
-                + soup.select('.contactinfotabletd2') \
-                + soup.select('.executivetabletdspace') \
-                + soup.select('.companyinfotabletd2') \
-                + soup.select('.microfont') \
-                + soup.select('img') \
-                + soup.select('script')
-
-        for spacer in spacers:
-            spacer.decompose() # gets rid of those items
+        [soup.select(spacer_name).decompose() for spacer_name in [
+                                                '.producttabletd2',
+                                                '.contactinfotabletd2',
+                                                '.executivetabletdspace',
+                                                '.companyinfotabletd2',
+                                                '.microfont',
+                                                'img',
+                                                'script',
+                                                ]]
 
         break_tags = soup.select('br')
         for break_tag in break_tags:
@@ -81,7 +80,7 @@ class CompanyCSV:
         executive_info = soup.select('.executivebox')
         executive_blocks = executive_info[0].select('a.vcardcontact')
 
-        for index in range(5):
+        for iandex in range(5):
             try:
                 name = executive_blocks[index].find_parent('td').find_next_sibling('td')
                 title = name.find_next_sibling('td')
