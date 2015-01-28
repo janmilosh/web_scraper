@@ -5,22 +5,19 @@ from bs4 import BeautifulSoup
 
 class CompanyCSV:
     def __init__(self, county):
-        self.county = county.lower()
+        county = county.lower()
+        self.county = county
         self.company_dict = {}
-        self.root_dir = os.getcwd()
-        self.fieldnames = ['Company', 'Business Description', 'Website', 'Employees on Site', \
-            'Phone', 'Address1', 'Address2', 'Name1', 'Title1', 'Name2', 'Title2', 'Name3', \
-            'Title3', 'Name4', 'Title4', 'Name5', 'Title5', 'Physical Address',\
+        self.fieldnames = ['Company', 'Business Description', 'Website', 'Employees on Site',
+            'Phone', 'Address1', 'Address2', 'Name1', 'Title1', 'Name2', 'Title2', 'Name3',
+            'Title3', 'Name4', 'Title4', 'Name5', 'Title5', 'Physical Address',
             'Mailing Address', 'Filename']
-
-    def _configure(self):
-        self.number_of_companies = len(glob.glob('pages/' + self.county + '/*'))
-        self.csv_file_path = os.path.join('csv_files', (self.county + '.csv'))
-        
+        self.number_of_companies = len(glob.glob('pages/' + county + '/*'))
+        self.csv_file_path = os.path.join('csv_files', (county + '.csv'))
+        self.page_directory_path = os.path.join('pages', county)   
+       
     def create_csv(self):
         """Writes parsed pages to a csv file."""
-        self._configure()
-
         with open(self.csv_file_path , 'w') as csvfile:            
             writer = csv.DictWriter(csvfile, dialect='excel', fieldnames=self.fieldnames)
             writer.writeheader()
@@ -38,16 +35,15 @@ class CompanyCSV:
         soup = BeautifulSoup(page.text)
         print(soup.prettify())
 
-        # get rid of spacers, images, and scripts, and break tags in the html
-        [soup.select(spacer_name).decompose() for spacer_name in [
-                                                '.producttabletd2',
-                                                '.contactinfotabletd2',
-                                                '.executivetabletdspace',
-                                                '.companyinfotabletd2',
-                                                '.microfont',
-                                                'img',
-                                                'script',
-                                                ]]
+        spacer_selectors = ['.producttabletd2', '.contactinfotabletd2',
+                        '.executivetabletdspace', '.companyinfotabletd2',
+                        '.microfont', 'img', 'script']
+        spacers = []
+        for selector in spacer_selectors:
+            spacers += soup.select(selector)
+
+        for spacer in spacers:
+            spacer.decompose() # gets rid of those items
 
         break_tags = soup.select('br')
         for break_tag in break_tags:
@@ -98,7 +94,8 @@ class CompanyCSV:
         """Sets the filename on the dict for the given page, which will appear on that
         line in the csv file for the county. Returns the file_path."""
         filename = self.county + '_' + str(index)
-        file_path = os.path.join('pages', self.county, filename)
+        file_path = os.path.join(self.page_directory_path, filename)
+        print('The file path', file_path)
         self.company_dict['Filename'] = filename
         return file_path
 
