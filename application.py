@@ -6,7 +6,7 @@ import scrape.get_company_pages as get_company_pages
 import scrape.parse_pages_to_csv as parse_pages_to_csv
 
 def main():
-    counties = ['Franklin']
+    counties = ['Morrow']
 
     for county in counties:
         company_links = get_company_links.CompanyLinks(county)
