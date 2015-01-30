@@ -23,7 +23,7 @@ class CompanyCSV:
             writer.writeheader()
             
             for index in range(self.number_of_companies):
-                self.company_dict = self._parse_page(index)
+                self._parse_page(index)
                 writer.writerow(self.company_dict)
 
     def _parse_page(self, index):
@@ -35,9 +35,10 @@ class CompanyCSV:
         soup = BeautifulSoup(page.text)
         print(soup.prettify())
 
-        spacer_selectors = ['.producttabletd2', '.contactinfotabletd2',
-                        '.executivetabletdspace', '.companyinfotabletd2',
-                        '.microfont', 'img', 'script']
+        spacer_selectors = ['.producttabletd2', '.contactinfotabletd2', '.executivetabletdspace',
+                            '.companyinfotabletd2', '.microfont', 'img', 'script']
+        
+
         spacers = []
         for selector in spacer_selectors:
             spacers += soup.select(selector)
@@ -49,10 +50,16 @@ class CompanyCSV:
         for break_tag in break_tags:
             break_tag.replace_with(',')
 
-        self.company_dict['Company'] = soup.select('.largefont.strongtext')[0].get_text()
+        
+        self._get_contact_info_from_soup(soup)
+        self._clean_up_crazy_whitespace_in_employees_on_site_field()
+        self._get_address_from_soup(soup)
+        self._get_executive_info_from_soup(soup)
 
-        # Get contact info, etc.
-        keys = ['Phone', 'Website', 'Physical Address', 'Mailing Address', 'Employees on Site', 'Business Description']
+    def _get_contact_info_from_soup(self, soup):
+        self.company_dict['Company'] = soup.select('.largefont.strongtext')[0].get_text()
+        keys = ['Phone', 'Website', 'Physical Address', 'Mailing Address', 
+                'Employees on Site', 'Business Description']
 
         for key in keys:
             try:
@@ -63,20 +70,40 @@ class CompanyCSV:
             except:
                 self.company_dict[key] = ''
 
-        # Clean up crazy whitespace in employees on site field
-        self.company_dict['Employees on Site'] = re.sub(r'\s+', '', self.company_dict['Employees on Site'])
+    def _set_file_parameters(self, index):
+        """Set the filename on the dict for the given page,
+        which will appear on that line in the csv file for the county.
+        Return the file_path."""
+        filename = self.county + '_' + str(index)
+        file_path = os.path.join(self.page_directory_path, filename)
+        print('The file path', file_path)
+        self.company_dict['Filename'] = filename
+        return file_path
+
+    def _get_page_from_pickle_file(self, file_path):
+        """Open the pickled page file for a given file path
+        and return the page object."""
+        pickle_file = open(file_path, 'rb')
+        page = pickle.load(pickle_file)
+        pickle_file.close()
+        return page
+
+    def _clean_up_crazy_whitespace_in_employees_on_site_field(self):
+        self.company_dict['Employees on Site'] = re.sub(r'\s+', '', 
+                                                 self.company_dict['Employees on Site'])
         self.company_dict['Phone'] = re.sub(r'\s+', '', self.company_dict['Phone'])
 
+    def _get_address_from_soup(self, soup):
         address = list(self.company_dict['Mailing Address'].split(','))
         address1 = address[:-3]
         self.company_dict['Address1'] = ', '.join(address1)
         self.company_dict['Address2'] = '{0},{1} {2}'.format(address[-3], address[-2], address[-1])
-        
-        # Get the executive info
+
+    def _get_executive_info_from_soup(self, soup):    
         executive_info = soup.select('.executivebox')
         executive_blocks = executive_info[0].select('a.vcardcontact')
 
-        for iandex in range(5):
+        for index in range(5):
             try:
                 name = executive_blocks[index].find_parent('td').find_next_sibling('td')
                 title = name.find_next_sibling('td')
@@ -87,24 +114,6 @@ class CompanyCSV:
                 self.company_dict['Title' + str(index + 1)] = ''
         print('----------------------------------------------')
         pprint.pprint(self.company_dict)
-
-        return self.company_dict
-
-    def _set_file_parameters(self, index):
-        """Sets the filename on the dict for the given page, which will appear on that
-        line in the csv file for the county. Returns the file_path."""
-        filename = self.county + '_' + str(index)
-        file_path = os.path.join(self.page_directory_path, filename)
-        print('The file path', file_path)
-        self.company_dict['Filename'] = filename
-        return file_path
-
-    def _get_page_from_pickle_file(self, file_path):
-        """Opens the pickled page file for a given file path and returns the page object."""
-        pickle_file = open(file_path, 'rb')
-        page = pickle.load(pickle_file)
-        pickle_file.close()
-        return page
 
 
 if __name__ == '__main__':
