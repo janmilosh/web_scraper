@@ -40,6 +40,24 @@ class CompanyCSV:
         self._get_address_from_soup(soup)
         self._get_executive_info_from_soup(soup)
 
+    def _set_file_parameters(self, index):
+        """Set the filename on the dict for the given page,
+        which will appear on that line in the csv file for the county.
+        Return the file_path."""
+        filename = self.county + '_' + str(index)
+        file_path = os.path.join(self.page_directory_path, filename)
+        print('The file path', file_path)
+        self.company_dict['Filename'] = filename
+        return file_path
+
+    def _get_page_from_pickle_file(self, file_path):
+        """Open the pickled page file for a given file path
+        and return the page object."""
+        pickle_file = open(file_path, 'rb')
+        page = pickle.load(pickle_file)
+        pickle_file.close()
+        return page
+
     def _clean_up_html(self, soup):
         """Get rid of spacer elements and break tags.
         Mutates the soup object."""
@@ -69,25 +87,7 @@ class CompanyCSV:
                 self.company_dict[key] = item.get_text().strip().replace(u'\xa0', ',')
             except:
                 self.company_dict[key] = ''
-
-    def _set_file_parameters(self, index):
-        """Set the filename on the dict for the given page,
-        which will appear on that line in the csv file for the county.
-        Return the file_path."""
-        filename = self.county + '_' + str(index)
-        file_path = os.path.join(self.page_directory_path, filename)
-        print('The file path', file_path)
-        self.company_dict['Filename'] = filename
-        return file_path
-
-    def _get_page_from_pickle_file(self, file_path):
-        """Open the pickled page file for a given file path
-        and return the page object."""
-        pickle_file = open(file_path, 'rb')
-        page = pickle.load(pickle_file)
-        pickle_file.close()
-        return page
-
+    
     def _clean_up_crazy_whitespace_in_employees_on_site_field(self):
         self.company_dict['Employees on Site'] = re.sub(r'\s+', '', 
                                                  self.company_dict['Employees on Site'])
