@@ -27,18 +27,24 @@ class CompanyCSV:
                 writer.writerow(self.company_dict)
 
     def _parse_page(self, index):
-        """"""
+        """Call methods that do the page parsing tasks."""
         file_path = self._set_file_parameters(index)
         page = self._get_page_from_pickle_file(file_path)
 
-        # make the soup from the page text
         soup = BeautifulSoup(page.text)
         print(soup.prettify())
 
+        self._clean_up_html(soup)
+        self._get_contact_info_from_soup(soup)
+        self._clean_up_crazy_whitespace_in_employees_on_site_field()
+        self._get_address_from_soup(soup)
+        self._get_executive_info_from_soup(soup)
+
+    def _clean_up_html(self, soup):
+        """Get rid of spacer elements and break tags.
+        Mutates the soup object."""
         spacer_selectors = ['.producttabletd2', '.contactinfotabletd2', '.executivetabletdspace',
                             '.companyinfotabletd2', '.microfont', 'img', 'script']
-        
-
         spacers = []
         for selector in spacer_selectors:
             spacers += soup.select(selector)
@@ -49,12 +55,6 @@ class CompanyCSV:
         break_tags = soup.select('br')
         for break_tag in break_tags:
             break_tag.replace_with(',')
-
-        
-        self._get_contact_info_from_soup(soup)
-        self._clean_up_crazy_whitespace_in_employees_on_site_field()
-        self._get_address_from_soup(soup)
-        self._get_executive_info_from_soup(soup)
 
     def _get_contact_info_from_soup(self, soup):
         self.company_dict['Company'] = soup.select('.largefont.strongtext')[0].get_text()
