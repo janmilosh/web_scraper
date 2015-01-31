@@ -4,6 +4,10 @@ from bs4 import BeautifulSoup
 
 
 class CompanyCSV:
+    """Use Beautiful Soup to parse pickled html pages to a dict that
+    is then written to a csv
+    """
+
     def __init__(self, county):
         county = county.lower()
         self.county = county
@@ -17,7 +21,7 @@ class CompanyCSV:
         self.page_directory_path = os.path.join('pages', county)   
        
     def create_csv(self):
-        """Writes parsed pages to a csv file."""
+        """Write parsed pages to a csv file."""
         with open(self.csv_file_path , 'w') as csvfile:            
             writer = csv.DictWriter(csvfile, dialect='excel', fieldnames=self.fieldnames)
             writer.writeheader()
@@ -27,7 +31,9 @@ class CompanyCSV:
                 writer.writerow(self.company_dict)
 
     def _parse_page(self, index):
-        """Call methods that do the page parsing tasks."""
+        """The main method for an individual page.
+        Call methods that do the page parsing tasks.
+        """
         file_path = self._set_file_parameters(index)
         page = self._get_page_from_pickle_file(file_path)
 
@@ -43,7 +49,8 @@ class CompanyCSV:
     def _set_file_parameters(self, index):
         """Set the filename on the dict for the given page,
         which will appear on that line in the csv file for the county.
-        Return the file_path."""
+        Return the file_path.
+        """
         filename = self.county + '_' + str(index)
         file_path = os.path.join(self.page_directory_path, filename)
         print('The file path', file_path)
@@ -52,15 +59,17 @@ class CompanyCSV:
 
     def _get_page_from_pickle_file(self, file_path):
         """Open the pickled page file for a given file path
-        and return the page object."""
+        and return the page object.
+        """
         pickle_file = open(file_path, 'rb')
         page = pickle.load(pickle_file)
         pickle_file.close()
         return page
 
     def _clean_up_html(self, soup):
-        """Get rid of spacer elements and break tags.
-        Mutates the soup object."""
+        """Get rid of spacer elements and break tags. The decompose 
+        method removes items from (and mutates) the soup object.
+        """
         spacer_selectors = ['.producttabletd2', '.contactinfotabletd2', '.executivetabletdspace',
                             '.companyinfotabletd2', '.microfont', 'img', 'script']
         spacers = []
@@ -68,8 +77,8 @@ class CompanyCSV:
             spacers += soup.select(selector)
 
         for spacer in spacers:
-            spacer.decompose() # gets rid of those items
-
+            spacer.decompose()
+            
         break_tags = soup.select('br')
         for break_tag in break_tags:
             break_tag.replace_with(',')
