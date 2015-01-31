@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 class CompanyCSV:
     """Use Beautiful Soup to parse pickled html pages to a dict that
-    is then written to a csv
+    is then written to a csv.
     """
 
     def __init__(self, county):
@@ -78,7 +78,7 @@ class CompanyCSV:
 
         for spacer in spacers:
             spacer.decompose()
-            
+
         break_tags = soup.select('br')
         for break_tag in break_tags:
             break_tag.replace_with(',')
