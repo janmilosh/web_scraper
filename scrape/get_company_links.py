@@ -13,7 +13,7 @@ class CompanyLinks:
 
     def __init__(self, county):
         self.county = county.title()        
-        self.driver = webdriver.Firefox()
+        self.driver = webdriver.Chrome()
         self.company_links = []
         self.root_dir = os.getcwd()
 
