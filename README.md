@@ -4,7 +4,12 @@
 
 ### Running the modules separately:
 
-Note: Run from a virtual environment (Python 3) with installed dependencies listed in ```requirements.txt```. Also, there is a secrets module not included here as these scripts can only be run by authorized users of the site that's being scraped.
+Note: Run from a virtual environment (Python 3.4) with installed dependencies listed in ```requirements.txt```. Also, there is a secrets module not included here as these scripts can only be run by authorized users of the site that's being scraped.
+
+```
+# set Python path in .bash_profile
+PATH="/Library/Frameworks/Python.framework/Versions/3.4/bin:${PATH}"
+```
 
 To get the links for the companies in a given county (written to the ```link_files``` directory):
 

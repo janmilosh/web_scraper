@@ -1,10 +1,10 @@
-import os, pickle, time
+import os, pickle, time, pdb
 
 from selenium import webdriver
 
 import secrets.secrets as secrets
 
-    
+
 class CompanyLinks:
     """Use selenium webdriver to go to a website and find a list of
     manufacturing company links for a specified county in Ohio
@@ -12,10 +12,11 @@ class CompanyLinks:
     """
 
     def __init__(self, county):
-        self.county = county.title()        
+        self.county = county.title()
         self.driver = webdriver.Chrome()
         self.company_links = []
         self.root_dir = os.getcwd()
+        self.company_count = 0
 
     def _configure(self):
         """Set the browser size and the amount of time we'll wait
@@ -26,7 +27,7 @@ class CompanyLinks:
         time_in_seconds = 10
         self.driver.set_window_size(width, height)
         self.driver.implicitly_wait(time_in_seconds)
-    
+
     def get_links(self):
         """The main method. Get the manufacturing company links and
         write results to text and pickle files.
@@ -45,8 +46,8 @@ class CompanyLinks:
     def _login_to_website(self):
         """Use webdriver to log in to the site from the login page."""
         self.driver.get(secrets.SITE_URL + '/login/')
-        username = self.driver.find_element_by_name("Username")
-        username.send_keys(secrets.USERNAME)
+        email = self.driver.find_element_by_name("Email")
+        email.send_keys(secrets.EMAIL)
         password = self.driver.find_element_by_name("Password")
         password.send_keys(secrets.PASSWORD)
         login = self.driver.find_element_by_name("Login")
@@ -55,24 +56,31 @@ class CompanyLinks:
     def _input_county_to_search_on_list_page(self):
         """Use webdriver to input the county that is to be searched
         from the list page.
-        """    
-        self.driver.get(secrets.SITE_URL + '/list/')
+        """
+        self.driver.get(secrets.SITE_URL + '/list/geography')
 
         previous_counties_to_remove = self.driver.find_elements_by_class_name('listed')
         for county in previous_counties_to_remove:
             county.click()
 
         county_input_field = self.driver.find_element_by_id('countysearch')
-        county_input_field.send_keys(self.county)
+        county = self.county
         county_and_state = self.county + ' County, OH'
-        county_to_search = self.driver.find_element_by_link_text(county_and_state)
-        county_to_search.click()
+        county_input_field.send_keys(county)
+        time.sleep(2)
+        js_string = "e=$('.ui-menu-item-wrapper:contains({})'); e.click()".format(county_and_state)
+        self.driver.execute_script(js_string)
+        self.driver.execute_script(js_string) # need to do this twice because it clicks on the first element the first time
 
     def _navigate_to_list_of_companies_page(self):
         """Use webdriver to click the link that results in navigation
         to the list of companies page.
         """
+        time.sleep(3)
         list_of_companies_count_button = self.driver.find_element_by_id('listcounttab')
+        count_str = list_of_companies_count_button.text
+        self.company_count = int(''.join(filter(str.isdigit, count_str)))
+        print(self.company_count)
         list_of_companies_count_button.click()
 
     def _scrape_links_from_paginated_list_of_companies(self):
@@ -82,13 +90,9 @@ class CompanyLinks:
         """
         self._scrape_links_from_single_page()
         try:
-            pagination = self.driver.find_element_by_class_name('pagination')
-            spans = pagination.find_elements_by_tag_name('span')
-            last_index = len(spans)-2
-            for i in range(2, last_index):
-                pagination = self.driver.find_element_by_class_name('pagination')
-                spans = pagination.find_elements_by_tag_name('span')
-                spans[i].click()
+            while len(self.company_links) < self.company_count:
+                js_string = "e=$('span:contains(Next)'); e.click();"
+                self.driver.execute_script(js_string)
                 time.sleep(2)
                 self._scrape_links_from_single_page()
         except:
@@ -97,7 +101,7 @@ class CompanyLinks:
     def _scrape_links_from_single_page(self):
         """Use webdriver to get the company links."""
         companies = self.driver.find_elements_by_class_name('listresultstabletdcompany')
-        
+
         for i in range(1, len(companies)):
             link = companies[i].find_element_by_tag_name('a')
             clean_link = self._clean_up_link(link)
@@ -115,7 +119,7 @@ class CompanyLinks:
     def _write_links_to_human_readable_file(self):
         """Write links to a text file, one link per line.
         These files are for reference only and aren't used
-        by any of the modules."""    
+        by any of the modules."""
         links_file_path = os.path.join(self.root_dir, 'link_files', (self.county.lower() + '.txt'))
         links_file = open(links_file_path, 'w')
         for link in self.company_links:
@@ -123,7 +127,7 @@ class CompanyLinks:
         links_file.close()
 
     def _write_links_to_pickle_file(self):
-        """Write the whole list of links to a pickle file."""    
+        """Write the whole list of links to a pickle file."""
         pickle_file_path = os.path.join(self.root_dir, 'pickle_files', (self.county.lower()))
         pickle_file = open(pickle_file_path, 'wb')
         pickle.dump(self.company_links, pickle_file)

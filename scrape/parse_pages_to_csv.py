@@ -1,4 +1,4 @@
-import csv, glob, os, pickle, re, pprint
+import csv, glob, os, pickle, re, pprint, pdb
 
 from bs4 import BeautifulSoup
 
@@ -18,14 +18,14 @@ class CompanyCSV:
             'Mailing Address', 'Filename']
         self.number_of_companies = len(glob.glob('pages/' + county + '/*'))
         self.csv_file_path = os.path.join('csv_files', (county + '.csv'))
-        self.page_directory_path = os.path.join('pages', county)   
-       
+        self.page_directory_path = os.path.join('pages', county)
+
     def create_csv(self):
         """Write parsed pages to a csv file."""
-        with open(self.csv_file_path , 'w') as csvfile:            
+        with open(self.csv_file_path , 'w') as csvfile:
             writer = csv.DictWriter(csvfile, dialect='excel', fieldnames=self.fieldnames)
             writer.writeheader()
-            
+
             for index in range(self.number_of_companies):
                 self._parse_page(index)
                 writer.writerow(self.company_dict)
@@ -36,9 +36,10 @@ class CompanyCSV:
         """
         file_path = self._set_file_parameters(index)
         page = self._get_page_from_pickle_file(file_path)
+        page = page.replace('<br>', ',')
 
-        soup = BeautifulSoup(page.text)
-        print(soup.prettify())
+        soup = BeautifulSoup(page)
+        # print(soup.prettify())
 
         self._clean_up_html(soup)
         self._get_contact_info_from_soup(soup)
@@ -67,11 +68,13 @@ class CompanyCSV:
         return page
 
     def _clean_up_html(self, soup):
-        """Get rid of spacer elements and break tags. The decompose 
+        """Get rid of spacer elements and break tags. The decompose
         method removes items from (and mutates) the soup object.
         """
-        spacer_selectors = ['.producttabletd2', '.contactinfotabletd2', '.executivetabletdspace',
-                            '.companyinfotabletd2', '.microfont', 'img', 'script']
+        spacer_selectors = ['.parentbox', '.notesbox', '.socialmediabox',
+                            '.mapbox', '.producttabletd2', '.contactinfotabletd2',
+                            '.executivetabletdspace', '.companyinfotabletd2',
+                            '.microfont', 'script', '.competitorbox']
         spacers = []
         for selector in spacer_selectors:
             spacers += soup.select(selector)
@@ -82,10 +85,11 @@ class CompanyCSV:
         break_tags = soup.select('br')
         for break_tag in break_tags:
             break_tag.replace_with(',')
+        # print(soup.prettify())
 
     def _get_contact_info_from_soup(self, soup):
         self.company_dict['Company'] = soup.select('.largefont.strongtext')[0].get_text()
-        keys = ['Phone', 'Website', 'Physical Address', 'Mailing Address', 
+        keys = ['Phone', 'Website', 'Physical Address', 'Mailing Address',
                 'Employees on Site', 'Business Description']
 
         for key in keys:
@@ -96,9 +100,9 @@ class CompanyCSV:
                 self.company_dict[key] = item.get_text().strip().replace(u'\xa0', ',')
             except:
                 self.company_dict[key] = ''
-    
+
     def _clean_up_crazy_whitespace_in_employees_on_site_field(self):
-        self.company_dict['Employees on Site'] = re.sub(r'\s+', '', 
+        self.company_dict['Employees on Site'] = re.sub(r'\s+', '',
                                                  self.company_dict['Employees on Site'])
         self.company_dict['Phone'] = re.sub(r'\s+', '', self.company_dict['Phone'])
 
@@ -108,13 +112,13 @@ class CompanyCSV:
         self.company_dict['Address1'] = ', '.join(address1)
         self.company_dict['Address2'] = '{0},{1} {2}'.format(address[-3], address[-2], address[-1])
 
-    def _get_executive_info_from_soup(self, soup):    
+    def _get_executive_info_from_soup(self, soup):
         executive_info = soup.select('.executivebox')
         executive_blocks = executive_info[0].select('a.vcardcontact')
 
         for index in range(5):
             try:
-                name = executive_blocks[index].find_parent('td').find_next_sibling('td')
+                name = executive_blocks[index].find_parent('td').find_next_sibling('td').find_next_sibling('td')
                 title = name.find_next_sibling('td')
                 self.company_dict['Name' + str(index + 1)] = name.get_text()
                 self.company_dict['Title' + str(index + 1)] = title.get_text()
