@@ -1,4 +1,3 @@
-secrets
 csv_files/*
 !csv_files/.gitkeep
 link_files/*
@@ -10,3 +9,4 @@ pages/*
 __pycache__
 *.pyc
 .DS_Store
+env
