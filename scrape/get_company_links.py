@@ -37,6 +37,7 @@ class CompanyLinks:
         self._input_county_to_search_on_list_page()
         self._navigate_to_list_of_companies_page()
         self._scrape_links_from_paginated_list_of_companies()
+        self._clean_up_county_search()
         self.driver.close()
 
         self._write_links_to_human_readable_file()
@@ -58,7 +59,7 @@ class CompanyLinks:
         from the list page.
         """
         self.driver.get(secrets.SITE_URL + '/list/geography')
-
+        time.sleep(2)
         previous_counties_to_remove = self.driver.find_elements_by_class_name('listed')
         for county in previous_counties_to_remove:
             county.click()
@@ -106,6 +107,16 @@ class CompanyLinks:
             link = companies[i].find_element_by_tag_name('a')
             clean_link = self._clean_up_link(link)
             self.company_links.append(clean_link)
+
+    def _clean_up_county_search(self):
+        """Use webdriver to remove county that was just searched. This is to
+        avoid a message appearing on subsequent runs.
+        """
+        self.driver.get(secrets.SITE_URL + '/list/geography')
+        time.sleep(2)
+        previous_counties_to_remove = self.driver.find_elements_by_class_name('listed')
+        for county in previous_counties_to_remove:
+            county.click()
 
     def _clean_up_link(self, link):
         """Remove everything but the path that we need
