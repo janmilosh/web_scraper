@@ -1,5 +1,5 @@
 import csv, glob, os, pickle, re, pprint, pdb
-
+# import pdb; pdb.set_trace()
 from bs4 import BeautifulSoup
 
 
@@ -12,10 +12,12 @@ class CompanyCSV:
         county = county.lower()
         self.county = county
         self.company_dict = {}
-        self.fieldnames = ['Company', 'Business Description', 'Website', 'Employees on Site',
-            'Phone', 'Address1', 'Address2', 'Name1', 'Title1', 'Name2', 'Title2', 'Name3',
-            'Title3', 'Name4', 'Title4', 'Name5', 'Title5', 'Physical Address',
-            'Mailing Address', 'Filename']
+        self.fieldnames = ['Company', 'Business Description',
+            'Year Established', 'Ownership', 'Employees', 'Annual Sales',
+            'Square Footage','Website', 'Phone', 'Address1', 'Address2',
+            'Name1', 'Title1', 'Name2', 'Title2', 'Name3', 'Title3', 'Name4',
+            'Title4', 'Name5', 'Title5', 'Physical Address', 'Mailing Address',
+            'Filename']
         self.number_of_companies = len(glob.glob('pages/' + county + '/*'))
         self.csv_file_path = os.path.join('csv_files', (county + '.csv'))
         self.page_directory_path = os.path.join('pages', county)
@@ -90,7 +92,7 @@ class CompanyCSV:
     def _get_contact_info_from_soup(self, soup):
         self.company_dict['Company'] = soup.select('.largefont.strongtext')[0].get_text()
         keys = ['Phone', 'Website', 'Physical Address', 'Mailing Address',
-                'Employees on Site', 'Business Description']
+                'Employees', 'Business Description', 'Year Established', 'Ownership', 'Annual Sales', 'Square Footage']
 
         for key in keys:
             try:
@@ -102,32 +104,43 @@ class CompanyCSV:
                 self.company_dict[key] = ''
 
     def _clean_up_crazy_whitespace_in_employees_on_site_field(self):
-        self.company_dict['Employees on Site'] = re.sub(r'\s+', '',
-                                                 self.company_dict['Employees on Site'])
+        self.company_dict['Employees'] = re.sub(r'\s+', '',
+                                                 self.company_dict['Employees'])
         self.company_dict['Phone'] = re.sub(r'\s+', '', self.company_dict['Phone'])
 
     def _get_address_from_soup(self, soup):
-        address = list(self.company_dict['Mailing Address'].split(','))
-        address1 = address[:-3]
-        self.company_dict['Address1'] = ', '.join(address1)
-        self.company_dict['Address2'] = '{0},{1} {2}'.format(address[-3], address[-2], address[-1])
-
+        try:
+            address = list(self.company_dict['Mailing Address'].split(','))
+            address1 = address[0]
+            self.company_dict['Address1'] = address1
+            # There is an extra comma in file between city and OH
+            self.company_dict['Address2'] = '{0}, {1} {2}'.format(address[-4], address[-2], address[-1])
+        except:
+            address = list(self.company_dict['Physical Address'].split(','))
+            address1 = address[0]
+            self.company_dict['Address1'] = address1
+            # There is an extra comma in file between city and OH
+            self.company_dict['Address2'] = '{0}, {1} {2}'.format(address[-5], address[-3], address[-2])
+# to edit - puts name in title field
     def _get_executive_info_from_soup(self, soup):
         executive_info = soup.select('.executivebox')
         executive_blocks = executive_info[0].select('a.vcardcontact')
 
         for index in range(5):
             try:
-                name = executive_blocks[index].find_parent('td').find_next_sibling('td').find_next_sibling('td')
+                name = executive_blocks[index].find_parent('td').find_next_sibling('td').find_next_sibling('td').find_next_sibling('td')
                 title = name.find_next_sibling('td')
-                self.company_dict['Name' + str(index + 1)] = name.get_text()
+                nameFin = name.get_text()
+                nameFin = nameFin.split(' ')
+                nameFin.remove('')
+                nameFin = ' '.join(nameFin)
+                self.company_dict['Name' + str(index + 1)] = nameFin
                 self.company_dict['Title' + str(index + 1)] = title.get_text()
             except:
                 self.company_dict['Name' + str(index + 1)] = ''
                 self.company_dict['Title' + str(index + 1)] = ''
         print('----------------------------------------------')
         pprint.pprint(self.company_dict)
-
 
 if __name__ == '__main__':
     county = input('Input county (i.e. Delaware) ==> ')
